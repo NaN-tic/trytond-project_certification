@@ -5,6 +5,5 @@
     <field name="company"/>
     <field name="number"/>
     <field name="date" widget="date"/>
-    <field name="date" widget="time" string="Time"/>
     <field name="state"/>
 </tree>
