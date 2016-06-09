@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!-- The COPYRIGHT file at the top level of this repository contains the full
+     copyright notices and license terms. -->
+<form string="Certification Line">
+    <label name="certification"/>
+    <field name="certification"/>
+    <label name="work"/>
+    <field name="work"/>
+    <label name="quantity"/>
+    <field name="quantity"/>
+    <label name="uom"/>
+    <field name="uom"/>
+</form>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!-- The COPYRIGHT file at the top level of this repository contains the full
+     copyright notices and license terms. -->
+<form string="Certification">
+    <label name="number"/>
+    <field name="number"/>
+    <label name="company"/>
+    <field name="company"/>
+    <label name="date"/>
+    <field name="date"/>
+    <label name="work"/>
+    <field name="work"/>
+    <field name="lines" colspan="4"/>
+    <field name="state"/>
+    <group id="buttons" colspan="2" col="4">
+        <button name="draft" string="Draft"/>
+        <button name="proposal" string="Propose"/>
+        <button name="confirm" string="Confirm"/>
+        <button name="cancel" string="Cancel"/>
+    </group>
+</form>
