@@ -9,5 +9,4 @@
     <field name="total_quantity"/>
     <field name="pending_quantity"/>
     <field name="certified_quantity"/>
-    <field name="invoiced_progress"/>
 </tree>

@@ -6,8 +6,7 @@ from trytond.pool import PoolMeta, Pool
 from trytond.pyson import Bool, Eval, If
 from trytond.transaction import Transaction
 
-__all__ = ['Certification', 'CertificationLine', 'Work',
-    'WorkInvoicedProgress', 'CertificationLineWorkProgressInvoicedRelation']
+__all__ = ['Certification', 'CertificationLine', 'Work']
 
 _STATES = {
     'readonly': Eval('state') != 'draft',
@@ -39,7 +38,6 @@ class Certification(Workflow, ModelSQL, ModelView):
             'readonly': Eval('state') == 'confirmed',
         })
 
-    invoiced = fields.Function(fields.Boolean('Invoiced'), 'is_invoiced')
     state = fields.Selection([
             ('draft', 'Draft'),
             ('proposal', 'Proposal'),
@@ -114,20 +112,6 @@ class Certification(Workflow, ModelSQL, ModelView):
                 line.uom = work.uom
                 self.lines += (line,)
 
-    def is_invoiced(self, name=None):
-        for line in self.lines:
-            if line.invoiced_progress:
-                return True
-        return False
-
-    @classmethod
-    def check_invoiced(cls, certifications):
-        for certification in certifications:
-            if certification.invoiced:
-                cls.raise_user_error('certification_invoiced_error', {
-                        'certification': certification.rec_name,
-                        })
-
     @classmethod
     def check_certifications(cls, certifications):
         for certification in certifications:
@@ -152,12 +136,6 @@ class Certification(Workflow, ModelSQL, ModelView):
     @Workflow.transition('confirmed')
     def confirm(cls, certifications):
         cls.check_certifications(certifications)
-
-    @classmethod
-    @ModelView.button
-    @Workflow.transition('cancel')
-    def cancel(cls, certifications):
-        cls.check_invoiced(certifications)
 
     @classmethod
     def create(cls, vlist):
@@ -223,11 +201,6 @@ class CertificationLine(ModelSQL, ModelView):
     work_uom_category = fields.Function(
         fields.Many2One('product.uom.category', 'Uom Category'),
         'on_change_with_work_uom_category')
-
-    invoiced_progress = fields.One2One(
-        'certification_line-invoiced_progress',
-        'certification_line', 'invoiced_progress',
-        'Work Invoice Progress')
 
     @staticmethod
     def default_uom_digits():
@@ -300,16 +273,12 @@ class Work:
 
         return result
 
-    @classmethod
-    def _get_total_progress_quantity(cls, works, name):
+    @property
+    def total_progress_quantity(self):
         pool = Pool()
         Uom = pool.get('product.uom')
-        result = {w.id: 0 for w in works}
-        result.update({w.id: Uom.compute_qty(
-                    w.uom, w.certified_quantity or 0,
-                    w.product_goods.default_uom)
-                for w in works if w.product_goods and w.uom})
-        return result
+        return Uom.compute_qty(self.uom, self.certified_quantity or 0,
+            self.product_goods.default_uom)
 
     def _get_lines_to_invoice_progress(self):
         pool = Pool()
@@ -319,58 +288,20 @@ class Work:
             return super(Work, self)._get_lines_to_invoice_progress()
 
         res = []
-        if self.progress is None:
+        if self.total_progress_quantity <= self.invoiced_quantity:
             return res
 
-        for cert in self.certifications:
-            if cert.certification.state != 'confirmed':
-                continue
+        quantity = self.total_progress_quantity - self.invoiced_quantity
+        invoiced_progress = InvoicedProgress(work=self,
+            quantity=quantity)
 
-            if cert.invoiced_progress:
-                continue
-
-            quantity = cert.quantity
-            invoiced_progress = InvoicedProgress(work=self,
-                quantity=quantity, certification_line=cert)
-
-            res.append({
-                'product': self.product_goods,
-                'quantity': quantity,
-                'unit': self.product_goods.default_uom,
-                'unit_price': self.unit_price,
-                'origin': invoiced_progress,
-                'description': self.name,
-            })
+        res.append({
+            'product': self.product_goods,
+            'quantity': quantity,
+            'unit': self.product_goods.default_uom,
+            'unit_price': self.list_price,
+            'origin': invoiced_progress,
+            'description': self.name,
+        })
 
         return res
-
-
-class WorkInvoicedProgress:
-    __name__ = 'project.work.invoiced_progress'
-    __metaclass__ = PoolMeta
-
-    certification_line = fields.One2One(
-        'certification_line-invoiced_progress',
-        'invoiced_progress', 'certification_line', 'Certification Line')
-
-
-class CertificationLineWorkProgressInvoicedRelation(ModelSQL):
-    'Invoice - Milestone'
-    __name__ = 'certification_line-invoiced_progress'
-    invoiced_progress = fields.Many2One('project.work.invoiced_progress',
-        'Work Invoiced Progress', ondelete='CASCADE',
-        required=True, select=True)
-    certification_line = fields.Many2One('project.certification.line',
-        'Certification Line',
-        ondelete='CASCADE', required=True, select=True)
-
-    # @classmethod
-    # def __setup__(cls):
-    #     super(CertificationLineWorkProgressInvoicedRelation, cls).__setup__()
-    #     t = cls.__table__()
-    #     cls._sql_constraints += [
-    #         ('invoiced_progress_unique', Unique(t,
-    #             t.invoiced_progress), 'The Invoice must be unique.'),
-    #         ('certification_line_unique', Unique(t, t.certification_line),
-    #             'The Certification Line must be unique.'),
-    #         ]
