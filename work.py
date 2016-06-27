@@ -250,6 +250,7 @@ class Work:
     def __setup__(cls):
         super(Work, cls).__setup__()
         cls.progress_quantity.states['invisible'] = True
+        cls.progress_quantity.states['required'] = False
 
     @classmethod
     def certified_quantities(cls, works, names):
