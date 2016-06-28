@@ -97,20 +97,21 @@ class Certification(Workflow, ModelSQL, ModelView):
     def default_state():
         return 'draft'
 
+    def certification_lines_from_work(self, projects):
+        for task in projects:
+            if task.invoice_product_type == 'goods':
+                line = task._get_certification_line()
+                line.certification = self
+                self.lines += (line,)
+            if task.children:
+                self.certification_lines_from_work(task.children)
+
     @fields.depends('work', 'lines')
     def on_change_work(self):
-        pool = Pool()
-        Work = pool.get('project.work')
-        Line = pool.get('project.certification.line')
         if not self.work:
             self.lines = []
         else:
-            for work in Work.search([('parent', 'child_of', [self.work.id]),
-                    ('id', '!=', self.work.id)]):
-                line = Line()
-                line.work = work
-                line.uom = work.uom
-                self.lines += (line,)
+            self.certification_lines_from_work([self.work])
 
     @classmethod
     def check_certifications(cls, certifications):
@@ -130,6 +131,11 @@ class Certification(Workflow, ModelSQL, ModelView):
     @classmethod
     @Workflow.transition('proposal')
     def proposal(cls, certifications):
+        pass
+
+    @classmethod
+    @Workflow.transition('cancel')
+    def cancel(cls, certifications):
         pass
 
     @classmethod
@@ -173,7 +179,8 @@ class CertificationLine(ModelSQL, ModelView):
     'Certification - Work'
     __name__ = 'project.certification.line'
 
-    certification = fields.Many2One('project.certification', 'Certification')
+    certification = fields.Many2One('project.certification', 'Certification',
+        ondelete='CASCADE')
     work = fields.Many2One('project.work', 'Work')
 
     total_quantity = fields.Function(fields.Float('Total Quantity',
@@ -201,6 +208,36 @@ class CertificationLine(ModelSQL, ModelView):
     work_uom_category = fields.Function(
         fields.Many2One('product.uom.category', 'Uom Category'),
         'on_change_with_work_uom_category')
+
+
+    @classmethod
+    def __setup__(cls):
+        super(CertificationLine, cls).__setup__()
+        cls._error_messages.update({
+            'wrong_certified_quantity': ('You try to certify '
+                '"%(quantity)s" but only "%(pending_quantity)s"'
+                ' pending quanrity on line "%(line)s"')
+            })
+
+    @classmethod
+    def validate(cls, lines):
+        super(CertificationLine, cls).validate(lines)
+        cls.check_quantities(lines)
+
+    @classmethod
+    def check_quantities(cls, lines):
+        for line in lines:
+            if line.quantity > line.pending_quantity:
+                cls.raise_user_error('wrong_certified_quantity', {
+                    'quantity': line.quantity,
+                    'pending_quantity': line.pending_quantity,
+                    'line': line.rec_name,
+                    })
+
+
+    @staticmethod
+    def default_quantity():
+        return 0.0
 
     @staticmethod
     def default_uom_digits():
@@ -274,7 +311,18 @@ class Work:
 
         return result
 
-    @property
+    def _get_certification_line(self):
+        pool = Pool()
+        Line = pool.get('project.certification.line')
+        line = Line()
+        line.quantity = 0.0
+        line.pending_quantity = self.certified_pending_quantity
+        line.certified_quantity = self.certified_quantity
+        line.total_quantity = self.quantity
+        line.work = self
+        line.uom = self.uom
+        return line
+
     def total_progress_quantity(self):
         pool = Pool()
         Uom = pool.get('product.uom')
@@ -289,10 +337,10 @@ class Work:
             return super(Work, self)._get_lines_to_invoice_progress()
 
         res = []
-        if self.total_progress_quantity <= self.invoiced_quantity:
+        if self.total_progress_quantity() <= self.invoiced_quantity:
             return res
 
-        quantity = self.total_progress_quantity - self.invoiced_quantity
+        quantity = self.total_progress_quantity() - self.invoiced_quantity
         invoiced_progress = InvoicedProgress(work=self,
             quantity=quantity)
 
