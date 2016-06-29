@@ -5,6 +5,7 @@ from trytond.model import ModelSQL, ModelView, Workflow, fields
 from trytond.pool import PoolMeta, Pool
 from trytond.pyson import Bool, Eval, If
 from trytond.transaction import Transaction
+from decimal import Decimal
 
 __all__ = ['Certification', 'CertificationLine', 'Work']
 
@@ -222,7 +223,8 @@ class CertificationLine(ModelSQL, ModelView):
     @classmethod
     def validate(cls, lines):
         super(CertificationLine, cls).validate(lines)
-        cls.check_quantities(lines)
+        # TODO: activate
+        # cls.check_quantities(lines)
 
     @classmethod
     def check_quantities(cls, lines):
@@ -286,7 +288,6 @@ class Work:
     @classmethod
     def __setup__(cls):
         super(Work, cls).__setup__()
-        cls.progress_quantity.states['invisible'] = True
         cls.progress_quantity.states['required'] = False
 
     @classmethod
@@ -323,9 +324,11 @@ class Work:
         line.uom = self.uom
         return line
 
-    def total_progress_quantity(self):
+    def total_progress_quantity(self, name=None):
         pool = Pool()
         Uom = pool.get('product.uom')
+        if self.invoice_product_type != 'goods':
+            return 0.0
         return Uom.compute_qty(self.uom, self.certified_quantity or 0,
             self.product_goods.default_uom)
 

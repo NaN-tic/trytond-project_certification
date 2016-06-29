@@ -5,5 +5,6 @@
     <field name="company"/>
     <field name="number"/>
     <field name="date" widget="date"/>
+    <field name="work"/>
     <field name="state"/>
 </tree>
