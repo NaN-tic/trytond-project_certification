@@ -11,7 +11,7 @@ this repository contains the full copyright notices and license terms. -->
 
         <record model="ir.action.act_window"
                 id="act_certification_configuration_form">
-            <field name="name">Certification</field>
+            <field name="name">Certifications</field>
             <field name="res_model">certification.configuration</field>
         </record>
         <record model="ir.action.act_window.view"
@@ -20,10 +20,10 @@ this repository contains the full copyright notices and license terms. -->
             <field name="view" ref="certification_configuration_view_form"/>
             <field name="act_window" ref="act_certification_configuration_form"/>
         </record>
-        <menuitem parent="project.menu_configuration"
+        <menuitem id="menu_certification_configuration"
             action="act_certification_configuration_form"
-            id="menu_certification_configuration"
-            sequence="0"/>
+            parent="project.menu_configuration" sequence="1"
+            icon="tryton-list"/>
 
         <record model="ir.property" id="property_certification_sequence">
             <field name="field"
