@@ -5,7 +5,6 @@ from trytond.model import ModelSQL, ModelView, Workflow, fields
 from trytond.pool import PoolMeta, Pool
 from trytond.pyson import Bool, Eval, If
 from trytond.transaction import Transaction
-from decimal import Decimal
 
 __all__ = ['Certification', 'CertificationLine', 'Work']
 
@@ -28,17 +27,15 @@ class Certification(Workflow, ModelSQL, ModelView):
     number = fields.Char('Number', states=_STATES, depends=_DEPENDS)
     date = fields.Date('Date', required=True, states=_STATES,
         depends=_DEPENDS)
-    work = fields.Many2One('project.work', 'Work',
+    work = fields.Many2One('project.work', 'Project',
         domain=[
             ('type', '=', 'project'),
             ],
         states=_STATES, depends=_DEPENDS)
-
     lines = fields.One2Many('project.certification.line', 'certification',
         'Lines', states={
             'readonly': Eval('state') == 'confirmed',
         })
-
     state = fields.Selection([
             ('draft', 'Draft'),
             ('proposal', 'Proposal'),
@@ -183,7 +180,18 @@ class CertificationLine(ModelSQL, ModelView):
     certification = fields.Many2One('project.certification', 'Certification',
         ondelete='CASCADE')
     work = fields.Many2One('project.work', 'Work')
-
+    work_uom_category = fields.Function(
+        fields.Many2One('product.uom.category', 'Uom Category'),
+        'on_change_with_work_uom_category')
+    uom = fields.Many2One('product.uom', 'UoM', domain=[
+            If(Bool(Eval('work_uom_category')),
+                ('category', '=', Eval('work_uom_category')),
+                ('category', '!=', -1)),
+            ], depends=['work_uom_category'])
+    uom_digits = fields.Function(fields.Integer('UoM Digits'),
+        'on_change_with_uom_digits')
+    quantity = fields.Float('Quantity', digits=(16, Eval('uom_digits', 2)),
+        depends=['uom_digits'])
     total_quantity = fields.Function(fields.Float('Total Quantity',
             digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
         'certified_quantities')
@@ -193,23 +201,6 @@ class CertificationLine(ModelSQL, ModelView):
     certified_quantity = fields.Function(fields.Float('Certified Quantity',
             digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
         'certified_quantities')
-
-    quantity = fields.Float('Quantity', digits=(16, Eval('uom_digits', 2)),
-        depends=['uom_digits'])
-
-    uom_digits = fields.Function(fields.Integer('UoM Digits'),
-        'on_change_with_uom_digits')
-
-    uom = fields.Many2One('product.uom', 'UoM', domain=[
-            If(Bool(Eval('work_uom_category')),
-                ('category', '=', Eval('work_uom_category')),
-                ('category', '!=', -1)),
-            ], depends=['work_uom_category'])
-
-    work_uom_category = fields.Function(
-        fields.Many2One('product.uom.category', 'Uom Category'),
-        'on_change_with_work_uom_category')
-
 
     @classmethod
     def __setup__(cls):
@@ -236,14 +227,24 @@ class CertificationLine(ModelSQL, ModelView):
                     'line': line.rec_name,
                     })
 
-
-    @staticmethod
-    def default_quantity():
-        return 0.0
+    @fields.depends('work')
+    def on_change_with_work_uom_category(self, name=None):
+        if self.work:
+            return self.work.uom.category.id
 
     @staticmethod
     def default_uom_digits():
         return 2
+
+    @fields.depends('uom')
+    def on_change_with_uom_digits(self, name=None):
+        if self.uom:
+            return self.uom.digits
+        return 2
+
+    @staticmethod
+    def default_quantity():
+        return 0.0
 
     @classmethod
     def certified_quantities(cls, lines, names):
@@ -259,36 +260,25 @@ class CertificationLine(ModelSQL, ModelView):
                 'certified_quantity', 0.0)
         return result
 
-    @fields.depends('uom')
-    def on_change_with_uom_digits(self, name=None):
-        if self.uom:
-            return self.uom.digits
-        return 2
-
-    @fields.depends('work')
-    def on_change_with_work_uom_category(self, name=None):
-        if self.work:
-            return self.work.uom.category.id
-
 
 class Work:
     __name__ = 'project.work'
     __metaclass__ = PoolMeta
-
     certifications = fields.One2Many('project.certification.line', 'work',
-        'Certifications')
+        'Certifications', readonly=True)
+    certified_quantity = fields.Function(fields.Float('Certified Quantity',
+            digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
+        'certified_quantities')
     certified_pending_quantity = fields.Function(
         fields.Float('Pending Quantity', digits=(16, Eval('uom_digits', 2)),
             depends=['uom_digits']),
-        'certified_quantities')
-    certified_quantity = fields.Function(fields.Float('Pending Quantity',
-            digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
         'certified_quantities')
 
     @classmethod
     def __setup__(cls):
         super(Work, cls).__setup__()
         cls.progress_quantity.states['required'] = False
+        cls.progress_quantity_func.readonly = True
 
     @classmethod
     def certified_quantities(cls, works, names):
@@ -344,16 +334,15 @@ class Work:
             return res
 
         quantity = self.total_progress_quantity() - self.invoiced_quantity
-        invoiced_progress = InvoicedProgress(work=self,
-            quantity=quantity)
-
         res.append({
-            'product': self.product_goods,
-            'quantity': quantity,
-            'unit': self.product_goods.default_uom,
-            'unit_price': self.list_price,
-            'origin': invoiced_progress,
-            'description': self.name,
-        })
+                'product': self.product_goods,
+                'quantity': quantity,
+                'unit': self.product_goods.default_uom,
+                'unit_price': self.list_price,
+                'origin': InvoicedProgress(
+                    work=self,
+                    quantity=quantity),
+                'description': self.name,
+                })
 
         return res
