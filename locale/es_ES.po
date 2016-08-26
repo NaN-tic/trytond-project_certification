@@ -2,6 +2,14 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=utf-8\n"
 
+msgctxt "error:project.certification.line:"
+msgid ""
+"You try to certify \"%(quantity)s\" but only \"%(pending_quantity)s\" "
+"pending quanrity on line \"%(line)s\""
+msgstr ""
+"Estás intentando certificar \"%(quantity)s\" pero la línea \"%(line)s\" solo"
+" tiene pendiente \"%(pending_quantity)s\""
+
 msgctxt "error:project.certification:"
 msgid ""
 "Certification \"%(line)s\" can not be confirmed because has not any "
@@ -52,38 +60,6 @@ msgctxt "field:certification.configuration,write_uid:"
 msgid "Write User"
 msgstr "Usuario modificación"
 
-msgctxt "field:certification_line-invoiced_progress,certification_line:"
-msgid "Certification Line"
-msgstr "Línea de certificación"
-
-msgctxt "field:certification_line-invoiced_progress,create_date:"
-msgid "Create Date"
-msgstr "Fecha de creación"
-
-msgctxt "field:certification_line-invoiced_progress,create_uid:"
-msgid "Create User"
-msgstr "Usuario de creación"
-
-msgctxt "field:certification_line-invoiced_progress,id:"
-msgid "ID"
-msgstr "Identificador"
-
-msgctxt "field:certification_line-invoiced_progress,invoiced_progress:"
-msgid "Work Invoiced Progress"
-msgstr "Progreso de trabajos facturados"
-
-msgctxt "field:certification_line-invoiced_progress,rec_name:"
-msgid "Name"
-msgstr "Nombre"
-
-msgctxt "field:certification_line-invoiced_progress,write_date:"
-msgid "Write Date"
-msgstr "Fecha modificación"
-
-msgctxt "field:certification_line-invoiced_progress,write_uid:"
-msgid "Write User"
-msgstr "Usuario modificación"
-
 msgctxt "field:project.certification,company:"
 msgid "Company"
 msgstr "Empresa"
@@ -104,10 +80,6 @@ msgctxt "field:project.certification,id:"
 msgid "ID"
 msgstr "Identificador"
 
-msgctxt "field:project.certification,invoiced:"
-msgid "Invoiced"
-msgstr "Facturada"
-
 msgctxt "field:project.certification,lines:"
 msgid "Lines"
 msgstr "Líneas"
@@ -125,8 +97,8 @@ msgid "State"
 msgstr "Estado"
 
 msgctxt "field:project.certification,work:"
-msgid "Work"
-msgstr "Trabajo"
+msgid "Project"
+msgstr "Proyecto"
 
 msgctxt "field:project.certification,write_date:"
 msgid "Write Date"
@@ -155,10 +127,6 @@ msgstr "Usuario de creación"
 msgctxt "field:project.certification.line,id:"
 msgid "ID"
 msgstr "Identificador"
-
-msgctxt "field:project.certification.line,invoiced_progress:"
-msgid "Work Invoice Progress"
-msgstr "Progreso de trabajo facturado"
 
 msgctxt "field:project.certification.line,pending_quantity:"
 msgid "Pending Quantity"
@@ -209,20 +177,12 @@ msgid "Pending Quantity"
 msgstr "Cantidad pendiente"
 
 msgctxt "field:project.work,certified_quantity:"
-msgid "Pending Quantity"
-msgstr "Cantidad pendiente"
-
-msgctxt "field:project.work.invoiced_progress,certification_line:"
-msgid "Certification Line"
-msgstr "Línea de certificación"
+msgid "Certified Quantity"
+msgstr "Cantidad certificada"
 
 msgctxt "model:certification.configuration,name:"
 msgid "Certification Configuration"
 msgstr "Configuración certificaciones"
-
-msgctxt "model:certification_line-invoiced_progress,name:"
-msgid "Invoice - Milestone"
-msgstr "Factura - Ejecución"
 
 msgctxt "model:ir.action,name:act_certification_configuration_form"
 msgid "Certification"
@@ -316,10 +276,6 @@ msgstr "Borrador"
 msgctxt "view:project.certification:"
 msgid "Propose"
 msgstr "Proponer"
-
-msgctxt "view:project.certification:"
-msgid "Time"
-msgstr "Hora"
 
 msgctxt "view:project.work:"
 msgid "Work"
