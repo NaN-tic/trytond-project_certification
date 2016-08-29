@@ -14,5 +14,8 @@
         <page name="certifications">
             <field name="certifications" colspan="4"/>
         </page>
+        <page name="certification_lines">
+            <field name="certification_lines" colspan="4"/>
+        </page>
     </xpath>
 </data>

@@ -19,29 +19,30 @@ class Certification(Workflow, ModelSQL, ModelView):
     __name__ = 'project.certification'
     _rec_name = 'number'
     company = fields.Many2One('company.company', 'Company', required=True,
-        states=_STATES, select=True, domain=[
+        domain=[
             ('id', If(Eval('context', {}).contains('company'), '=', '!='),
                 Eval('context', {}).get('company', -1)),
             ],
-        depends=_DEPENDS)
+        states=_STATES, depends=_DEPENDS)
     number = fields.Char('Number', states=_STATES, depends=_DEPENDS)
     date = fields.Date('Date', required=True, states=_STATES,
         depends=_DEPENDS)
-    work = fields.Many2One('project.work', 'Project',
-        domain=[
+    work = fields.Many2One('project.work', 'Project', required=True, domain=[
             ('type', '=', 'project'),
             ],
-        states=_STATES, depends=_DEPENDS)
+        states={
+                'readonly': (Eval('state') != 'draft') | Bool(Eval('lines')),
+            }, depends=['state', 'lines'])
     lines = fields.One2Many('project.certification.line', 'certification',
         'Lines', states={
-            'readonly': Eval('state') == 'confirmed',
-        })
+            'readonly': Eval('state').in_(['confirmed', 'cancel']),
+            }, depends=['state'])
     state = fields.Selection([
             ('draft', 'Draft'),
             ('proposal', 'Proposal'),
             ('confirmed', 'Confirmed'),
             ('cancel', 'Cancel')
-            ], 'State', readonly=True, select=True)
+            ], 'State', readonly=True)
 
     @classmethod
     def __setup__(cls):
@@ -95,6 +96,13 @@ class Certification(Workflow, ModelSQL, ModelView):
     def default_state():
         return 'draft'
 
+    @fields.depends('work', 'lines')
+    def on_change_work(self):
+        if not self.work:
+            self.lines = []
+        else:
+            self.certification_lines_from_work([self.work])
+
     def certification_lines_from_work(self, projects):
         for task in projects:
             if task.invoice_product_type == 'goods':
@@ -103,22 +111,6 @@ class Certification(Workflow, ModelSQL, ModelView):
                 self.lines += (line,)
             if task.children:
                 self.certification_lines_from_work(task.children)
-
-    @fields.depends('work', 'lines')
-    def on_change_work(self):
-        if not self.work:
-            self.lines = []
-        else:
-            self.certification_lines_from_work([self.work])
-
-    @classmethod
-    def check_certifications(cls, certifications):
-        for certification in certifications:
-            for line in certification.lines:
-                if not line.quantity:
-                    cls.raise_user_error('line_quantity_error', {
-                            'line': line.rec_name,
-                            })
 
     @classmethod
     @ModelView.button
@@ -140,6 +132,15 @@ class Certification(Workflow, ModelSQL, ModelView):
     @Workflow.transition('confirmed')
     def confirm(cls, certifications):
         cls.check_certifications(certifications)
+
+    @classmethod
+    def check_certifications(cls, certifications):
+        for certification in certifications:
+            for line in certification.lines:
+                if not line.quantity:
+                    cls.raise_user_error('line_quantity_error', {
+                            'line': line.rec_name,
+                            })
 
     @classmethod
     def create(cls, vlist):
@@ -178,8 +179,13 @@ class CertificationLine(ModelSQL, ModelView):
     __name__ = 'project.certification.line'
 
     certification = fields.Many2One('project.certification', 'Certification',
-        ondelete='CASCADE')
-    work = fields.Many2One('project.work', 'Work')
+        required=True, readonly=True, ondelete='CASCADE')
+    work = fields.Many2One('project.work', 'Task', required=True, domain=[
+            ('type', '=', 'task'),
+            ('invoice_product_type', '=', 'goods'),
+            ('parent', 'child_of',
+                Eval('_parent_certification', {}).get('project', -1)),
+            ])
     work_uom_category = fields.Function(
         fields.Many2One('product.uom.category', 'Uom Category'),
         'on_change_with_work_uom_category')
@@ -264,8 +270,15 @@ class CertificationLine(ModelSQL, ModelView):
 class Work:
     __name__ = 'project.work'
     __metaclass__ = PoolMeta
-    certifications = fields.One2Many('project.certification.line', 'work',
-        'Certifications', readonly=True)
+    certifications = fields.One2Many('project.certification', 'work',
+        'Certifications', readonly=True, states={
+            'invisible': Eval('type') != 'project',
+            }, depends=['type'])
+    certification_lines = fields.One2Many('project.certification.line', 'work',
+        'Certifications', readonly=True, states={
+            'invisible': ((Eval('type') != 'task')
+                | (Eval('invoice_product_type') != 'goods')),
+            }, depends=['type', 'invoice_product_type'])
     certified_quantity = fields.Function(fields.Float('Certified Quantity',
             digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
         'certified_quantities')
@@ -293,7 +306,7 @@ class Work:
             result['certified_quantity'][work.id] = 0.0
             result['certified_pending_quantity'][work.id] = work.quantity
 
-            for cert in work.certifications:
+            for cert in work.certification_lines:
                 if cert.certification.state != 'confirmed':
                     continue
                 qty = Uom.compute_qty(cert.uom, cert.quantity, work.uom)
@@ -346,3 +359,13 @@ class Work:
                 })
 
         return res
+
+    @classmethod
+    def copy(cls, works, default=None):
+        if default is None:
+            default = {}
+        else:
+            default = default.copy()
+        default['certifications'] = None
+        default['certification_lines'] = None
+        return super(Work, cls).copy(works, default=default)
