@@ -7,18 +7,15 @@
     <newline/>
     <label name="work"/>
     <field name="work"/>
+    <label name="work_quantity"/>
+    <field name="work_quantity"/>
     <newline/>
+    <label name="certified_quantity"/>
+    <field name="certified_quantity"/>
+    <label name="pending_quantity"/>
+    <field name="pending_quantity"/>
     <label name="quantity"/>
     <field name="quantity"/>
     <label name="uom"/>
     <field name="uom"/>
-    <newline/>
-    <group id="totals" colspan="4" col="6">
-        <label name="total_quantity"/>
-        <field name="total_quantity"/>
-        <label name="certified_quantity"/>
-        <field name="certified_quantity"/>
-        <label name="pending_quantity"/>
-        <field name="pending_quantity"/>
-    </group>
 </form>

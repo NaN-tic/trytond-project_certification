@@ -4,9 +4,9 @@
 <tree string="Certification Line" editable="bottom">
     <field name="certification"/>
     <field name="work"/>
+    <field name="work_quantity"/>
+    <field name="certified_quantity"/>
+    <field name="pending_quantity"/>
     <field name="quantity"/>
     <field name="uom"/>
-    <field name="total_quantity"/>
-    <field name="pending_quantity"/>
-    <field name="certified_quantity"/>
 </tree>

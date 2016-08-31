@@ -29,10 +29,11 @@ class Certification(Workflow, ModelSQL, ModelView):
         depends=_DEPENDS)
     work = fields.Many2One('project.work', 'Project', required=True, domain=[
             ('type', '=', 'project'),
+            ('company', '=', Eval('company', -1)),
             ],
         states={
                 'readonly': (Eval('state') != 'draft') | Bool(Eval('lines')),
-            }, depends=['state', 'lines'])
+            }, depends=['company', 'state', 'lines'])
     lines = fields.One2Many('project.certification.line', 'certification',
         'Lines', states={
             'readonly': Eval('state').in_(['confirmed', 'cancel']),
@@ -101,16 +102,28 @@ class Certification(Workflow, ModelSQL, ModelView):
         if not self.work:
             self.lines = []
         else:
-            self.certification_lines_from_work([self.work])
+            self._certification_lines_from_work([self.work])
 
-    def certification_lines_from_work(self, projects):
+    def _certification_lines_from_work(self, projects):
         for task in projects:
-            if task.invoice_product_type == 'goods':
-                line = task._get_certification_line()
-                line.certification = self
+            if (task.invoice_product_type == 'goods'
+                    and task.certified_pending_quantity):
+                line = self._get_certification_line_work(task)
                 self.lines += (line,)
             if task.children:
-                self.certification_lines_from_work(task.children)
+                self._certification_lines_from_work(task.children)
+
+    def _get_certification_line_work(self, work):
+        pool = Pool()
+        Line = pool.get('project.certification.line')
+        line = Line()
+        line.work = work
+        line.uom = work.uom
+        line.work_quantity = work.quantity
+        line.certified_quantity = work.certified_quantity
+        line.pending_quantity = work.certified_pending_quantity
+        line.quantity = 0.0
+        return line
 
     @classmethod
     @ModelView.button
@@ -175,7 +188,7 @@ class Certification(Workflow, ModelSQL, ModelView):
 
 
 class CertificationLine(ModelSQL, ModelView):
-    'Certification - Work'
+    'Certification Line'
     __name__ = 'project.certification.line'
 
     certification = fields.Many2One('project.certification', 'Certification',
@@ -184,7 +197,7 @@ class CertificationLine(ModelSQL, ModelView):
             ('type', '=', 'task'),
             ('invoice_product_type', '=', 'goods'),
             ('parent', 'child_of',
-                Eval('_parent_certification', {}).get('project', -1)),
+                Eval('_parent_certification', {}).get('work', -1)),
             ])
     work_uom_category = fields.Function(
         fields.Many2One('product.uom.category', 'Uom Category'),
@@ -196,17 +209,25 @@ class CertificationLine(ModelSQL, ModelView):
             ], depends=['work_uom_category'])
     uom_digits = fields.Function(fields.Integer('UoM Digits'),
         'on_change_with_uom_digits')
-    quantity = fields.Float('Quantity', digits=(16, Eval('uom_digits', 2)),
-        depends=['uom_digits'])
-    total_quantity = fields.Function(fields.Float('Total Quantity',
+    work_quantity = fields.Function(fields.Float('Work Quantity',
             digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
-        'certified_quantities')
-    pending_quantity = fields.Function(fields.Float('Pending Quantity',
-            digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
-        'certified_quantities')
+        'on_change_with_work_quantity')
     certified_quantity = fields.Function(fields.Float('Certified Quantity',
             digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
-        'certified_quantities')
+        'on_change_with_certified_quantity')
+    pending_quantity = fields.Function(fields.Float('Pending Quantity',
+            digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
+        'on_change_with_pending_quantity')
+    quantity = fields.Float('Quantity', digits=(16, Eval('uom_digits', 2)),
+        domain=[
+            ['OR',
+                ('quantity', '=', None),
+                [
+                    ('quantity', '>=', 0.0),
+                    ('quantity', '<=', Eval('pending_quantity')),
+                    ]]
+            ],
+        depends=['uom_digits', 'pending_quantity'])
 
     @classmethod
     def __setup__(cls):
@@ -216,22 +237,6 @@ class CertificationLine(ModelSQL, ModelView):
                 '"%(quantity)s" but only "%(pending_quantity)s"'
                 ' pending quanrity on line "%(line)s"')
             })
-
-    @classmethod
-    def validate(cls, lines):
-        super(CertificationLine, cls).validate(lines)
-        # TODO: activate
-        # cls.check_quantities(lines)
-
-    @classmethod
-    def check_quantities(cls, lines):
-        for line in lines:
-            if line.quantity > line.pending_quantity:
-                cls.raise_user_error('wrong_certified_quantity', {
-                    'quantity': line.quantity,
-                    'pending_quantity': line.pending_quantity,
-                    'line': line.rec_name,
-                    })
 
     @fields.depends('work')
     def on_change_with_work_uom_category(self, name=None):
@@ -248,23 +253,31 @@ class CertificationLine(ModelSQL, ModelView):
             return self.uom.digits
         return 2
 
+    @fields.depends('work', 'uom')
+    def on_change_with_work_quantity(self, name=None):
+        pool = Pool()
+        Uom = pool.get('product.uom')
+        if self.work:
+            if self.uom:
+                return Uom.compute_qty(
+                    self.work.uom, self.work.quantity, self.uom)
+            return self.work.quantity
+
+    @fields.depends('id', 'work', 'uom')
+    def on_change_with_certified_quantity(self, name=None):
+        if self.work:
+            return self.work.get_certified_quantity(
+                exclude_certification_line_id=self.id if self.id > 0 else None,
+                to_uom=self.uom)
+
+    @fields.depends('id', 'work', 'uom')
+    def on_change_with_pending_quantity(self, name=None):
+        if self.work:
+            return self.work_quantity - self.certified_quantity
+
     @staticmethod
     def default_quantity():
         return 0.0
-
-    @classmethod
-    def certified_quantities(cls, lines, names):
-        result = {n: {} for n in
-                ('certified_quantity', 'total_quantity', 'pending_quantity')}
-
-        for line in lines:
-            work = line.work
-            result['total_quantity'][line.id] = getattr(work, 'quantity', 0.0)
-            result['pending_quantity'][line.id] = getattr(work,
-                'certified_pending_quantity', 0.0)
-            result['certified_quantity'][line.id] = getattr(work,
-                'certified_quantity', 0.0)
-        return result
 
 
 class Work:
@@ -280,12 +293,18 @@ class Work:
                 | (Eval('invoice_product_type') != 'goods')),
             }, depends=['type', 'invoice_product_type'])
     certified_quantity = fields.Function(fields.Float('Certified Quantity',
-            digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
-        'certified_quantities')
+            digits=(16, Eval('uom_digits', 2)), states={
+                'invisible': ((Eval('type') != 'task')
+                    | (Eval('invoice_product_type') != 'goods')),
+                }, depends=['uom_digits', 'type', 'invoice_product_type']),
+        'get_certified_quantity')
     certified_pending_quantity = fields.Function(
         fields.Float('Pending Quantity', digits=(16, Eval('uom_digits', 2)),
-            depends=['uom_digits']),
-        'certified_quantities')
+            states={
+                'invisible': ((Eval('type') != 'task')
+                    | (Eval('invoice_product_type') != 'goods')),
+                }, depends=['uom_digits', 'type', 'invoice_product_type']),
+        'get_certified_pending_quantity')
 
     @classmethod
     def __setup__(cls):
@@ -293,39 +312,27 @@ class Work:
         cls.progress_quantity.states['required'] = False
         cls.progress_quantity_func.readonly = True
 
-    @classmethod
-    def certified_quantities(cls, works, names):
+    def get_certified_quantity(self, name=None,
+            exclude_certification_line_id=None, to_uom=None):
         pool = Pool()
         Uom = pool.get('product.uom')
-        result = {}
+        if self.type == 'task':
+            if to_uom == None:
+                to_uom = self.uom
+            return sum((
+                    Uom.compute_qty(cl.uom, cl.quantity, to_uom)
+                    for cl in self.certification_lines
+                    if (cl.certification.state == 'confirmed'
+                        and cl.id != exclude_certification_line_id)),
+                0.0)
 
-        result['certified_quantity'] = {}
-        result['certified_pending_quantity'] = {}
-
-        for work in works:
-            result['certified_quantity'][work.id] = 0.0
-            result['certified_pending_quantity'][work.id] = work.quantity
-
-            for cert in work.certification_lines:
-                if cert.certification.state != 'confirmed':
-                    continue
-                qty = Uom.compute_qty(cert.uom, cert.quantity, work.uom)
-                result['certified_quantity'][work.id] += qty
-                result['certified_pending_quantity'][work.id] -= qty
-
-        return result
-
-    def _get_certification_line(self):
-        pool = Pool()
-        Line = pool.get('project.certification.line')
-        line = Line()
-        line.quantity = 0.0
-        line.pending_quantity = self.certified_pending_quantity
-        line.certified_quantity = self.certified_quantity
-        line.total_quantity = self.quantity
-        line.work = self
-        line.uom = self.uom
-        return line
+    def get_certified_pending_quantity(self, name):
+        if self.type == 'task':
+            if self.quantity and self.certified_quantity:
+                return self.quantity - self.certified_quantity
+            elif self.quantity:
+                return self.quantity
+            return 0
 
     def total_progress_quantity(self, name=None):
         pool = Pool()

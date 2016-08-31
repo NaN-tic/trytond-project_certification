@@ -158,11 +158,22 @@
             <field name="name">work_form</field>
         </record>
 
-        <!-- TODO: unused -->
-        <record model="ir.ui.view" id="work_certification_view_list">
-            <field name="model">project.work</field>
-            <field name="type">tree</field>
-            <field name="name">work_list_certification</field>
+        <record model="ir.action.act_window" id="act_project_certifications">
+            <field name="name">Certifications</field>
+            <field name="res_model">project.certification</field>
+            <field name="domain"
+                eval="[('work', 'in', Eval('active_ids'))]" pyson="1"/>
+        </record>
+        <record model="ir.action.keyword"
+                id="act_open_work_certifications_keyword1">
+            <field name="keyword">form_relate</field>
+            <field name="model">project.work,-1</field>
+            <field name="action" ref="act_project_certifications"/>
+        </record>
+        <record model="ir.action-res.group"
+            id="act_project_certifications-group_certification">
+            <field name="action" ref="act_project_certifications"/>
+            <field name="group" ref="group_project_certification"/>
         </record>
 
         <!-- Menus -->

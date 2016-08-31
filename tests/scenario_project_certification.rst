@@ -196,13 +196,13 @@ Propose Certifications::
 Check Certifications::
 
     >>> line1, line2 = certification.lines
-    >>> line1.total_quantity
+    >>> line1.work_quantity
     100.0
     >>> line1.certified_quantity
     0.0
     >>> line1.pending_quantity
     100.0
-    >>> line2.total_quantity
+    >>> line2.work_quantity
     1000.0
     >>> line2.certified_quantity
     0.0
@@ -223,13 +223,13 @@ Invoice project::
 Check Certifications::
 
     >>> line1, line2 = certification.lines
-    >>> line1.total_quantity
+    >>> line1.work_quantity
     100.0
     >>> line1.certified_quantity
     5.0
     >>> line1.pending_quantity
     95.0
-    >>> line2.total_quantity
+    >>> line2.work_quantity
     1000.0
     >>> line2.certified_quantity
     10.0
@@ -259,13 +259,13 @@ Propose Certifications::
 Check Certifications::
 
     >>> line1, line2 = certification.lines
-    >>> line1.total_quantity
+    >>> line1.work_quantity
     100.0
     >>> line1.certified_quantity
     5.0
     >>> line1.pending_quantity
     95.0
-    >>> line2.total_quantity
+    >>> line2.work_quantity
     1000.0
     >>> line2.certified_quantity
     10.0
@@ -279,13 +279,13 @@ Confirm Certifications::
 Check Certifications::
 
     >>> line1, line2 = certification.lines
-    >>> line1.total_quantity
+    >>> line1.work_quantity
     100.0
     >>> line1.certified_quantity
     10.0
     >>> line1.pending_quantity
     90.0
-    >>> line2.total_quantity
+    >>> line2.work_quantity
     1000.0
     >>> line2.certified_quantity
     20.0
@@ -302,13 +302,13 @@ Invoice project::
 Check Certifications::
 
     >>> line1, line2 = certification.lines
-    >>> line1.total_quantity
+    >>> line1.work_quantity
     100.0
     >>> line1.certified_quantity
     10.0
     >>> line1.pending_quantity
     90.0
-    >>> line2.total_quantity
+    >>> line2.work_quantity
     1000.0
     >>> line2.certified_quantity
     20.0
@@ -338,13 +338,13 @@ Propose Certifications::
 Check Certifications::
 
     >>> line1, line2 = certification.lines
-    >>> line1.total_quantity
+    >>> line1.work_quantity
     100.0
     >>> line1.certified_quantity
     10.0
     >>> line1.pending_quantity
     90.0
-    >>> line2.total_quantity
+    >>> line2.work_quantity
     1000.0
     >>> line2.certified_quantity
     20.0
@@ -365,13 +365,13 @@ Invoice project::
 Check Certifications::
 
     >>> line1, line2 = certification.lines
-    >>> line1.total_quantity
+    >>> line1.work_quantity
     100.0
     >>> line1.certified_quantity
     8.0
     >>> line1.pending_quantity
     92.0
-    >>> line2.total_quantity
+    >>> line2.work_quantity
     1000.0
     >>> line2.certified_quantity
     2.0
