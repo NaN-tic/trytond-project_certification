@@ -138,10 +138,6 @@ msgctxt "field:project.certification.line,rec_name:"
 msgid "Name"
 msgstr "Nom"
 
-msgctxt "field:project.certification.line,total_quantity:"
-msgid "Total Quantity"
-msgstr "Quantitat total"
-
 msgctxt "field:project.certification.line,uom:"
 msgid "UoM"
 msgstr "UdM"
@@ -151,8 +147,12 @@ msgid "UoM Digits"
 msgstr "Decimals UdM"
 
 msgctxt "field:project.certification.line,work:"
-msgid "Work"
-msgstr "Treball"
+msgid "Task"
+msgstr "Tasca"
+
+msgctxt "field:project.certification.line,work_quantity:"
+msgid "Work Quantity"
+msgstr "Quantitat tasca"
 
 msgctxt "field:project.certification.line,work_uom_category:"
 msgid "Uom Category"
@@ -165,6 +165,10 @@ msgstr "Usuari creació"
 msgctxt "field:project.certification.line,write_uid:"
 msgid "Write User"
 msgstr "Usuari modificació"
+
+msgctxt "field:project.work,certification_lines:"
+msgid "Certifications"
+msgstr "Certificacions"
 
 msgctxt "field:project.work,certifications:"
 msgid "Certifications"
@@ -188,6 +192,10 @@ msgstr "Certificacions"
 
 msgctxt "model:ir.action,name:act_project_certification"
 msgid "Certification"
+msgstr "Certificacions"
+
+msgctxt "model:ir.action,name:act_project_certifications"
+msgid "Certifications"
 msgstr "Certificacions"
 
 msgctxt "model:ir.action.act_window.domain,name:act_certiciation_domain_all"
