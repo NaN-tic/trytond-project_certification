@@ -25,6 +25,8 @@ class Certification(Workflow, ModelSQL, ModelView):
             ],
         states=_STATES, depends=_DEPENDS)
     number = fields.Char('Number', states=_STATES, depends=_DEPENDS)
+    reference = fields.Char('Reference', states=_STATES, depends=_DEPENDS)
+
     date = fields.Date('Date', required=True, states=_STATES,
         depends=_DEPENDS)
     work = fields.Many2One('project.work', 'Project', required=True, domain=[
@@ -193,8 +195,8 @@ class CertificationLine(ModelSQL, ModelView):
 
     certification = fields.Many2One('project.certification', 'Certification',
         required=True, readonly=True, ondelete='CASCADE')
-    work = fields.Many2One('project.work', 'Task', required=True, domain=[
-            ('type', '=', 'task'),
+    work = fields.Many2One('project.work', 'Project', required=True, domain=[
+            ('type', '=', 'project'),
             ('invoice_product_type', '=', 'goods'),
             ('parent', 'child_of',
                 Eval('_parent_certification', {}).get('work', -1)),
@@ -224,7 +226,7 @@ class CertificationLine(ModelSQL, ModelView):
                 ('quantity', '=', None),
                 [
                     ('quantity', '>=', 0.0),
-                    ('quantity', '<=', Eval('pending_quantity')),
+#                    ('quantity', '<=', Eval('pending_quantity')),
                     ]]
             ],
         depends=['uom_digits', 'pending_quantity'])
@@ -273,7 +275,7 @@ class CertificationLine(ModelSQL, ModelView):
     @fields.depends('id', 'work', 'uom')
     def on_change_with_pending_quantity(self, name=None):
         if self.work:
-            return self.work_quantity - self.certified_quantity
+            return self.work.quantity - self.work.certified_quantity
 
     @staticmethod
     def default_quantity():
@@ -316,23 +318,21 @@ class Work:
             exclude_certification_line_id=None, to_uom=None):
         pool = Pool()
         Uom = pool.get('product.uom')
-        if self.type == 'task':
-            if to_uom == None:
-                to_uom = self.uom
-            return sum((
-                    Uom.compute_qty(cl.uom, cl.quantity, to_uom)
-                    for cl in self.certification_lines
-                    if (cl.certification.state == 'confirmed'
-                        and cl.id != exclude_certification_line_id)),
-                0.0)
+        if to_uom == None:
+            to_uom = self.uom
+        return sum((
+                Uom.compute_qty(cl.uom, cl.quantity, to_uom)
+                for cl in self.certification_lines
+                if (cl.certification.state == 'confirmed'
+                    and cl.id != exclude_certification_line_id)),
+            0.0)
 
     def get_certified_pending_quantity(self, name):
-        if self.type == 'task':
-            if self.quantity and self.certified_quantity:
-                return self.quantity - self.certified_quantity
-            elif self.quantity:
-                return self.quantity
-            return 0
+        if self.quantity and self.certified_quantity:
+            return self.quantity - self.certified_quantity
+        elif self.quantity:
+            return self.quantity
+        return 0
 
     def total_progress_quantity(self, name=None):
         pool = Pool()

@@ -4,6 +4,9 @@
 <form string="Certification">
     <label name="number"/>
     <field name="number"/>
+    <label name="reference"/>
+    <field name="reference"/>
+
     <label name="company"/>
     <field name="company"/>
     <label name="date"/>
