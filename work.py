@@ -81,7 +81,7 @@ class Certification(Workflow, ModelSQL, ModelView):
                 'delete_non_draft': ('Certification "%s" must be in draft '
                     'state in order to be deleted.'),
                 'line_quantity_error': 'Certification "%(line)s" can not be '
-                    'confirmed because has not any quantity.',
+                    'confirmed because has not any quantity or exceeds.',
                 'certification_invoiced_error': 'You cannot cancel '
                     'certification "%(certification)s" because it has been '
                     'invoiced.',
@@ -104,7 +104,7 @@ class Certification(Workflow, ModelSQL, ModelView):
         if not self.work:
             self.lines = []
         else:
-            self._certification_lines_from_work([self.work])
+            self._certification_lines_from_work(self.work.children)
 
     def _certification_lines_from_work(self, projects):
         for task in projects:
@@ -152,7 +152,7 @@ class Certification(Workflow, ModelSQL, ModelView):
     def check_certifications(cls, certifications):
         for certification in certifications:
             for line in certification.lines:
-                if not line.quantity:
+                if not line.quantity or line.quantity > line.pending_quantity:
                     cls.raise_user_error('line_quantity_error', {
                             'line': line.rec_name,
                             })
