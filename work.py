@@ -208,7 +208,7 @@ class CertificationLine(ModelSQL, ModelView):
             If(Bool(Eval('work_uom_category')),
                 ('category', '=', Eval('work_uom_category')),
                 ('category', '!=', -1)),
-            ], depends=['work_uom_category'])
+            ], depends=['work_uom_category'], required=True)
     uom_digits = fields.Function(fields.Integer('UoM Digits'),
         'on_change_with_uom_digits')
     work_quantity = fields.Function(fields.Float('Work Quantity',
@@ -244,6 +244,11 @@ class CertificationLine(ModelSQL, ModelView):
     def on_change_with_work_uom_category(self, name=None):
         if self.work:
             return self.work.uom.category.id
+
+    @fields.depends('work')
+    def on_change_work(self, name=None):
+        if self.work:
+            self.uom = self.work.uom
 
     @staticmethod
     def default_uom_digits():
