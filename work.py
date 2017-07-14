@@ -93,7 +93,7 @@ class Certification(Workflow, ModelSQL, ModelView):
 
     @staticmethod
     def default_date():
-        return datetime.datetime.now()
+        return datetime.date.today()
 
     @staticmethod
     def default_state():
