@@ -5,6 +5,7 @@ from trytond.model import ModelSQL, ModelView, Workflow, fields
 from trytond.pool import PoolMeta, Pool
 from trytond.pyson import Bool, Eval, If
 from trytond.transaction import Transaction
+from decimal import Decimal
 
 __all__ = ['Certification', 'CertificationLine', 'Work']
 
@@ -272,6 +273,7 @@ class CertificationLine(ModelSQL, ModelView):
 
     @fields.depends('id', 'work', 'uom')
     def on_change_with_certified_quantity(self, name=None):
+
         if self.work:
             return self.work.get_certified_quantity(
                 exclude_certification_line_id=self.id if self.id > 0 else None,
@@ -280,7 +282,8 @@ class CertificationLine(ModelSQL, ModelView):
     @fields.depends('id', 'work', 'uom')
     def on_change_with_pending_quantity(self, name=None):
         if self.work:
-            return self.work.quantity - self.work.certified_quantity
+            return self.work.uom.round(self.work.quantity -
+                self.work.certified_quantity)
 
     @staticmethod
     def default_quantity():
@@ -334,7 +337,7 @@ class Work:
 
     def get_certified_pending_quantity(self, name):
         if self.quantity and self.certified_quantity:
-            return self.quantity - self.certified_quantity
+            return self.uom.round(self.quantity - self.certified_quantity)
         elif self.quantity:
             return self.quantity
         return 0
