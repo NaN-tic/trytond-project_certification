@@ -33,6 +33,7 @@ class Certification(Workflow, ModelSQL, ModelView):
     work = fields.Many2One('project.work', 'Project', required=True, domain=[
             ('type', '=', 'project'),
             ('company', '=', Eval('company', -1)),
+            ('state', '=', 'opened'),
             ],
         states={
                 'readonly': (Eval('state') != 'draft') | Bool(Eval('lines')),
@@ -109,6 +110,8 @@ class Certification(Workflow, ModelSQL, ModelView):
 
     def _certification_lines_from_work(self, projects):
         for task in projects:
+            if task.state != 'opened':
+                continue
             if (task.invoice_product_type == 'goods'
                     and task.certified_pending_quantity):
                 line = self._get_certification_line_work(task)
