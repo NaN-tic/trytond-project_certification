@@ -82,8 +82,9 @@ class Certification(Workflow, ModelSQL, ModelView):
         cls._error_messages.update({
                 'delete_non_draft': ('Certification "%s" must be in draft '
                     'state in order to be deleted.'),
-                'line_quantity_error': 'Certification "%(line)s" can not be '
-                    'confirmed because has not any quantity or exceeds.',
+                'line_quantity_error': 'Certification line "%(line)s" can not be '
+                    'confirmed because has not any quantity or quantity '
+                    'is bigger than pending quantity.',
                 'certification_invoiced_error': 'You cannot cancel '
                     'certification "%(certification)s" because it has been '
                     'invoiced.',
