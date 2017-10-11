@@ -2,17 +2,26 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=utf-8\n"
 
-msgctxt "error:project.certification:"
+msgctxt "error:project.certification.line:"
 msgid ""
-"Certification \"%(line)s\" can not be confirmed because has not any "
-"quantity."
+"You try to certify \"%(quantity)s\" but only \"%(pending_quantity)s\" "
+"pending quanrity on line \"%(line)s\""
 msgstr ""
-"La certificació \"%(line)s\" no es pot confirmar perquè no té cap quantitat."
+"Estàs intentant certificar \"%(quantity)s\" però la línia \"%(line)s\" només"
+" té pendent \"%(pending_quantity)s\"."
 
 msgctxt "error:project.certification:"
 msgid "Certification \"%s\" must be in draft state in order to be deleted."
 msgstr ""
 "La certificació \"%s\" ha d'estar en estat esborrany per poderla eliminar."
+
+msgctxt "error:project.certification:"
+msgid ""
+"Certification line \"%(line)s\" can not be confirmed because has not any "
+"quantity or quantity is bigger than pending quantity."
+msgstr ""
+"No es pot confirmar la línia \"%(line)s\" perquè no té quantitat o la "
+"quantitat és més gran que la quantitat pendent."
 
 msgctxt "error:project.certification:"
 msgid ""
@@ -36,7 +45,7 @@ msgstr "Usuari de creació"
 
 msgctxt "field:certification.configuration,id:"
 msgid "ID"
-msgstr "Identificador"
+msgstr "ID"
 
 msgctxt "field:certification.configuration,rec_name:"
 msgid "Name"
@@ -44,43 +53,11 @@ msgstr "Nom"
 
 msgctxt "field:certification.configuration,write_date:"
 msgid "Write Date"
-msgstr "Usuari creació"
+msgstr "Usuari de creació"
 
 msgctxt "field:certification.configuration,write_uid:"
 msgid "Write User"
-msgstr "Usuari modificació"
-
-msgctxt "field:certification_line-invoiced_progress,certification_line:"
-msgid "Certification Line"
-msgstr "Línia de certificació"
-
-msgctxt "field:certification_line-invoiced_progress,create_date:"
-msgid "Create Date"
-msgstr "Data de creació"
-
-msgctxt "field:certification_line-invoiced_progress,create_uid:"
-msgid "Create User"
-msgstr "Usuari de creació"
-
-msgctxt "field:certification_line-invoiced_progress,id:"
-msgid "ID"
-msgstr "Identificador"
-
-msgctxt "field:certification_line-invoiced_progress,invoiced_progress:"
-msgid "Work Invoiced Progress"
-msgstr "Progrés de treballs facturats"
-
-msgctxt "field:certification_line-invoiced_progress,rec_name:"
-msgid "Name"
-msgstr "Nom"
-
-msgctxt "field:certification_line-invoiced_progress,write_date:"
-msgid "Write Date"
-msgstr "Usuari creació"
-
-msgctxt "field:certification_line-invoiced_progress,write_uid:"
-msgid "Write User"
-msgstr "Usuari modificació"
+msgstr "Usuari de modificació"
 
 msgctxt "field:project.certification,company:"
 msgid "Company"
@@ -100,11 +77,7 @@ msgstr "Data"
 
 msgctxt "field:project.certification,id:"
 msgid "ID"
-msgstr "Identificador"
-
-msgctxt "field:project.certification,invoiced:"
-msgid "Invoiced"
-msgstr "Identificador"
+msgstr "ID"
 
 msgctxt "field:project.certification,lines:"
 msgid "Lines"
@@ -118,21 +91,25 @@ msgctxt "field:project.certification,rec_name:"
 msgid "Name"
 msgstr "Nom"
 
+msgctxt "field:project.certification,reference:"
+msgid "Reference"
+msgstr "Referència"
+
 msgctxt "field:project.certification,state:"
 msgid "State"
 msgstr "Estat"
 
 msgctxt "field:project.certification,work:"
-msgid "Work"
-msgstr "Treball"
+msgid "Project"
+msgstr "Projecte"
 
 msgctxt "field:project.certification,write_date:"
 msgid "Write Date"
-msgstr "Usuari creació"
+msgstr "Usuari de creació"
 
 msgctxt "field:project.certification,write_uid:"
 msgid "Write User"
-msgstr "Usuari modificació"
+msgstr "Usuari de modificació"
 
 msgctxt "field:project.certification.line,certification:"
 msgid "Certification"
@@ -152,11 +129,7 @@ msgstr "Usuari de creació"
 
 msgctxt "field:project.certification.line,id:"
 msgid "ID"
-msgstr "Identificador"
-
-msgctxt "field:project.certification.line,invoiced_progress:"
-msgid "Work Invoice Progress"
-msgstr "Progrés de treball facturat"
+msgstr "ID"
 
 msgctxt "field:project.certification.line,pending_quantity:"
 msgid "Pending Quantity"
@@ -170,10 +143,6 @@ msgctxt "field:project.certification.line,rec_name:"
 msgid "Name"
 msgstr "Nom"
 
-msgctxt "field:project.certification.line,total_quantity:"
-msgid "Total Quantity"
-msgstr "Quantitat total"
-
 msgctxt "field:project.certification.line,uom:"
 msgid "UoM"
 msgstr "UdM"
@@ -183,8 +152,12 @@ msgid "UoM Digits"
 msgstr "Decimals UdM"
 
 msgctxt "field:project.certification.line,work:"
-msgid "Work"
-msgstr "Treball"
+msgid "Project"
+msgstr "Tasca"
+
+msgctxt "field:project.certification.line,work_quantity:"
+msgid "Work Quantity"
+msgstr "Quantitat tasca"
 
 msgctxt "field:project.certification.line,work_uom_category:"
 msgid "Uom Category"
@@ -192,11 +165,15 @@ msgstr "Categoria UdM"
 
 msgctxt "field:project.certification.line,write_date:"
 msgid "Write Date"
-msgstr "Usuari creació"
+msgstr "Usuari de creació"
 
 msgctxt "field:project.certification.line,write_uid:"
 msgid "Write User"
-msgstr "Usuari modificació"
+msgstr "Usuari de modificació"
+
+msgctxt "field:project.work,certification_lines:"
+msgid "Certifications"
+msgstr "Certificacions"
 
 msgctxt "field:project.work,certifications:"
 msgid "Certifications"
@@ -207,27 +184,23 @@ msgid "Pending Quantity"
 msgstr "Quantitat pendent"
 
 msgctxt "field:project.work,certified_quantity:"
-msgid "Pending Quantity"
-msgstr "Quantitat pendent"
-
-msgctxt "field:project.work.invoiced_progress,certification_line:"
-msgid "Certification Line"
-msgstr "Línia de certificació"
+msgid "Certified Quantity"
+msgstr "Quantitat certificada"
 
 msgctxt "model:certification.configuration,name:"
 msgid "Certification Configuration"
 msgstr "Configuració certificacions"
 
-msgctxt "model:certification_line-invoiced_progress,name:"
-msgid "Invoice - Milestone"
-msgstr "Factura - Fita"
-
 msgctxt "model:ir.action,name:act_certification_configuration_form"
-msgid "Certification"
+msgid "Certifications"
 msgstr "Certificacions"
 
 msgctxt "model:ir.action,name:act_project_certification"
 msgid "Certification"
+msgstr "Certificacions"
+
+msgctxt "model:ir.action,name:act_project_certifications"
+msgid "Certifications"
 msgstr "Certificacions"
 
 msgctxt "model:ir.action.act_window.domain,name:act_certiciation_domain_all"
@@ -244,15 +217,15 @@ msgid "Proposal"
 msgstr "Proposta"
 
 msgctxt "model:ir.sequence,name:sequence_certification"
-msgid "Certification"
+msgid "Certifications"
 msgstr "Certificació"
 
 msgctxt "model:ir.sequence.type,name:sequence_type_certification"
-msgid "Certification"
+msgid "Certifications"
 msgstr "Certificacions"
 
 msgctxt "model:ir.ui.menu,name:menu_certification_configuration"
-msgid "Certification"
+msgid "Certifications"
 msgstr "Certifications"
 
 msgctxt "model:ir.ui.menu,name:menu_project_certification"
@@ -264,8 +237,8 @@ msgid "Certification"
 msgstr "Certificacions"
 
 msgctxt "model:project.certification.line,name:"
-msgid "Certification - Work"
-msgstr "Certificació - Tasca"
+msgid "Certification Line"
+msgstr "Línia certificació"
 
 msgctxt "model:res.group,name:group_project_certification"
 msgid "Project Certification"
@@ -289,7 +262,7 @@ msgstr "Proposta"
 
 msgctxt "view:certification.configuration:"
 msgid "Certification Configuration"
-msgstr "Configuració Certificació"
+msgstr "Configuració certificació"
 
 msgctxt "view:project.certification.line:"
 msgid "Certification Line"
@@ -305,7 +278,7 @@ msgstr "Certificació"
 
 msgctxt "view:project.certification:"
 msgid "Confirm"
-msgstr "Confirmar"
+msgstr "Confirma"
 
 msgctxt "view:project.certification:"
 msgid "Draft"
@@ -314,10 +287,6 @@ msgstr "Esborrany"
 msgctxt "view:project.certification:"
 msgid "Propose"
 msgstr "Proposta"
-
-msgctxt "view:project.certification:"
-msgid "Time"
-msgstr "Hora"
 
 msgctxt "view:project.work:"
 msgid "Work"

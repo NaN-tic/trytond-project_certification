@@ -10,7 +10,5 @@ def register():
         Configuration,
         Certification,
         CertificationLine,
-        CertificationLineWorkProgressInvoicedRelation,
         Work,
-        WorkInvoicedProgress,
         module='project_certification', type_='model')

@@ -4,8 +4,16 @@
 <form string="Certification Line">
     <label name="certification"/>
     <field name="certification"/>
+    <newline/>
     <label name="work"/>
     <field name="work"/>
+    <label name="work_quantity"/>
+    <field name="work_quantity"/>
+    <newline/>
+    <label name="certified_quantity"/>
+    <field name="certified_quantity"/>
+    <label name="pending_quantity"/>
+    <field name="pending_quantity"/>
     <label name="quantity"/>
     <field name="quantity"/>
     <label name="uom"/>

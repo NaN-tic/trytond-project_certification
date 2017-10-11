@@ -16,16 +16,20 @@
             <field name="user" ref="res.user_trigger"/>
             <field name="group" ref="group_project_certification"/>
         </record>
+
+        <!-- project.certification -->
         <record model="ir.ui.view" id="certification_view_form">
             <field name="model">project.certification</field>
             <field name="type">form</field>
             <field name="name">certification_form</field>
         </record>
+
         <record model="ir.ui.view" id="certification_view_list">
             <field name="model">project.certification</field>
             <field name="type">tree</field>
             <field name="name">certification_list</field>
         </record>
+
         <record model="ir.action.act_window" id="act_project_certification">
             <field name="name">Certification</field>
             <field name="res_model">project.certification</field>
@@ -62,6 +66,7 @@
             <field name="sequence" eval="9999"/>
             <field name="act_window" ref="act_project_certification"/>
         </record>
+
         <record model="ir.model.access" id="access_project_certification">
             <field name="model"
                 search="[('model', '=', 'project.certification')]"/>
@@ -70,6 +75,7 @@
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
+
         <record model="ir.model.access" id="access_project_certification_admin">
             <field name="model"
                 search="[('model', '=', 'project.certification')]"/>
@@ -79,53 +85,21 @@
             <field name="perm_create" eval="True"/>
             <field name="perm_delete" eval="True"/>
         </record>
-        <record model="ir.ui.view" id="work_certification_view_list">
-            <field name="model">project.work</field>
-            <field name="type">tree</field>
-            <field name="name">work_certification_list</field>
-        </record>
-
-        <record model="ir.ui.view" id="certification_line_view_form">
-            <field name="model">project.certification.line</field>
-            <field name="type">form</field>
-            <field name="name">certification_line_form</field>
-        </record>
-        <record model="ir.ui.view" id="certification_line_view_list">
-            <field name="model">project.certification.line</field>
-            <field name="type">tree</field>
-            <field name="name">certification_line_list</field>
-        </record>
-        <record model="ir.model.access" id="access_project_certification_line">
-            <field name="model"
-                search="[('model', '=', 'project.certification.line')]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_delete" eval="True"/>
-        </record>
-
-
-      <!--   <record model="ir.action.act_window" id="act_project_certification">
-            <field name="name">Certification</field>
-            <field name="res_model">project.certification</field>
-        </record>
- -->
 
         <record model="ir.rule.group" id="rule_group_project_certification">
             <field name="model"
                 search="[('model', '=', 'project.certification')]"/>
             <field name="global_p" eval="True"/>
         </record>
-
         <record model="ir.rule" id="rule_project_certification1">
+            <field name="rule_group" ref="rule_group_project_certification"/>
             <field name="domain"
                 eval="[('company', '=', Eval('user', {}).get('company', None))]"
                 pyson="1"/>
-            <field name="rule_group" ref="rule_group_project_certification"/>
         </record>
 
         <record model="ir.sequence.type" id="sequence_type_certification">
-            <field name="name">Certification</field>
+            <field name="name">Certifications</field>
             <field name="code">project.certification</field>
         </record>
         <record model="ir.sequence.type-res.group"
@@ -140,15 +114,72 @@
         </record>
 
         <record model="ir.sequence" id="sequence_certification">
-            <field name="name">Certification</field>
+            <field name="name">Certifications</field>
             <field name="code">project.certification</field>
+        </record>
+
+        <!-- project.certification.line -->
+        <record model="ir.ui.view" id="certification_line_view_form">
+            <field name="model">project.certification.line</field>
+            <field name="type">form</field>
+            <field name="name">certification_line_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="certification_line_view_list">
+            <field name="model">project.certification.line</field>
+            <field name="type">tree</field>
+            <field name="name">certification_line_list</field>
+        </record>
+
+        <record model="ir.model.access" id="access_project_certification_line">
+            <field name="model"
+                search="[('model', '=', 'project.certification.line')]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access"
+            id="access_project_certification_line_admin">
+            <field name="model"
+                search="[('model', '=', 'project.certification.line')]"/>
+            <field name="group" ref="group_project_certification"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
+        <!-- project.work -->
+        <record model="ir.ui.view" id="work_view_form">
+            <field name="model">project.work</field>
+            <field name="inherit" ref="project.work_view_form"/>
+            <field name="name">work_form</field>
+        </record>
+
+        <record model="ir.action.act_window" id="act_project_certifications">
+            <field name="name">Certifications</field>
+            <field name="res_model">project.certification</field>
+            <field name="domain"
+                eval="[('work', 'in', Eval('active_ids'))]" pyson="1"/>
+        </record>
+        <record model="ir.action.keyword"
+                id="act_open_work_certifications_keyword1">
+            <field name="keyword">form_relate</field>
+            <field name="model">project.work,-1</field>
+            <field name="action" ref="act_project_certifications"/>
+        </record>
+        <record model="ir.action-res.group"
+            id="act_project_certifications-group_certification">
+            <field name="action" ref="act_project_certifications"/>
+            <field name="group" ref="group_project_certification"/>
         </record>
 
         <!-- Menus -->
         <menuitem action="act_project_certification"
             id="menu_project_certification"
             parent="project.menu_project" sequence="30"/>
-
         <record model="ir.ui.menu-res.group"
             id="menu_project_certification_group_project_certification">
             <field name="menu" ref="menu_project_certification"/>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!-- The COPYRIGHT file at the top level of this repository contains the full
+     copyright notices and license terms. -->
+<data>
+    <xpath expr="/form/notebook/page/field[@name='uom']" position="after">
+        <newline/>
+        <label name="certified_quantity"/>
+        <field name="certified_quantity"/>
+        <label name="certified_pending_quantity"/>
+        <field name="certified_pending_quantity"/>
+    </xpath>
+    <xpath expr="/form/notebook/page[@name='invoiced_progress']"
+        position="before">
+        <page name="certifications">
+            <field name="certifications" colspan="4"/>
+        </page>
+        <page name="certification_lines">
+            <field name="certification_lines" colspan="4"/>
+        </page>
+    </xpath>
+</data>
