@@ -27,7 +27,6 @@ class Certification(Workflow, ModelSQL, ModelView):
         states=_STATES, depends=_DEPENDS)
     number = fields.Char('Number', states=_STATES, depends=_DEPENDS)
     reference = fields.Char('Reference', states=_STATES, depends=_DEPENDS)
-
     date = fields.Date('Date', required=True, states=_STATES,
         depends=_DEPENDS)
     work = fields.Many2One('project.work', 'Project', required=True, domain=[
@@ -36,12 +35,13 @@ class Certification(Workflow, ModelSQL, ModelView):
             ('state', '=', 'opened'),
             ],
         states={
-                'readonly': (Eval('state') != 'draft') | Bool(Eval('lines')),
-            }, depends=['company', 'state', 'lines'])
+            'readonly': (Eval('state') != 'draft') | Bool(Eval('lines')),
+        }, depends=['company', 'state', 'lines'])
     lines = fields.One2Many('project.certification.line', 'certification',
         'Lines', states={
-            'readonly': Eval('state').in_(['confirmed', 'cancel']),
-            }, depends=['state'])
+            'readonly': (Eval('state').in_(['confirmed', 'cancel'])
+                | ~Eval('work', 0)),
+        }, depends=['state'])
     state = fields.Selection([
             ('draft', 'Draft'),
             ('proposal', 'Proposal'),
@@ -52,6 +52,11 @@ class Certification(Workflow, ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(Certification, cls).__setup__()
+        cls._order = [
+            ('number', 'DESC'),
+            ('date', 'DESC'),
+            ('id', 'DESC'),
+            ]
         cls._transitions |= set((
                 ('draft', 'proposal'),
                 ('proposal', 'draft'),
@@ -200,7 +205,8 @@ class CertificationLine(ModelSQL, ModelView):
 
     certification = fields.Many2One('project.certification', 'Certification',
         required=True, readonly=True, ondelete='CASCADE')
-    work = fields.Many2One('project.work', 'Project', required=True, domain=[
+    work = fields.Many2One('project.work', 'Project', required=True,
+        domain=[
             ('type', '=', 'project'),
             ('invoice_product_type', '=', 'goods'),
             ('parent', 'child_of',
@@ -209,7 +215,8 @@ class CertificationLine(ModelSQL, ModelView):
     work_uom_category = fields.Function(
         fields.Many2One('product.uom.category', 'Uom Category'),
         'on_change_with_work_uom_category')
-    uom = fields.Many2One('product.uom', 'UoM', domain=[
+    uom = fields.Many2One('product.uom', 'UoM',
+        domain=[
             If(Bool(Eval('work_uom_category')),
                 ('category', '=', Eval('work_uom_category')),
                 ('category', '!=', -1)),
@@ -245,19 +252,18 @@ class CertificationLine(ModelSQL, ModelView):
                 ' pending quanrity on line "%(line)s"')
             })
 
+    @staticmethod
+    def default_uom_digits():
+        return 2
+
+    @staticmethod
+    def default_quantity():
+        return 0.0
+
     @fields.depends('work')
     def on_change_with_work_uom_category(self, name=None):
         if self.work:
             return self.work.uom.category.id
-
-    @fields.depends('work')
-    def on_change_work(self, name=None):
-        if self.work:
-            self.uom = self.work.uom
-
-    @staticmethod
-    def default_uom_digits():
-        return 2
 
     @fields.depends('uom')
     def on_change_with_uom_digits(self, name=None):
@@ -289,9 +295,10 @@ class CertificationLine(ModelSQL, ModelView):
             return self.work.uom.round(self.work.quantity -
                 self.work.certified_quantity)
 
-    @staticmethod
-    def default_quantity():
-        return 0.0
+    @fields.depends('work')
+    def on_change_work(self):
+        if self.work:
+            self.uom = self.work.uom
 
 
 class Work:
@@ -328,8 +335,8 @@ class Work:
 
     def get_certified_quantity(self, name=None,
             exclude_certification_line_id=None, to_uom=None):
-        pool = Pool()
-        Uom = pool.get('product.uom')
+        Uom = Pool().get('product.uom')
+
         if to_uom == None:
             to_uom = self.uom
         return sum((
@@ -347,16 +354,15 @@ class Work:
         return 0
 
     def total_progress_quantity(self, name=None):
-        pool = Pool()
-        Uom = pool.get('product.uom')
+        Uom = Pool().get('product.uom')
+
         if self.invoice_product_type != 'goods':
             return 0.0
         return Uom.compute_qty(self.uom, self.certified_quantity or 0,
             self.product_goods.default_uom)
 
     def _get_lines_to_invoice_progress(self):
-        pool = Pool()
-        InvoicedProgress = pool.get('project.work.invoiced_progress')
+        InvoicedProgress = Pool().get('project.work.invoiced_progress')
 
         if not self.product_goods:
             return super(Work, self)._get_lines_to_invoice_progress()
