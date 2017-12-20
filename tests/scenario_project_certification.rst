@@ -152,20 +152,21 @@ Create a Project::
     >>> project.party = customer
     >>> project.project_invoice_method = 'progress'
     >>> project.invoice_product_type = 'service'
+    >>> project.product_goods = product
 
     >>> task1 = ProjectWork()
     >>> task1.name = 'Task 1'
-    >>> task1.type = 'task'
+    >>> task1.type = 'project'
     >>> task1.invoice_product_type = 'goods'
-    >>> task1.product_goods = service
+    >>> task1.product_goods = product
     >>> task1.quantity = 100.0
-    >>> task1.uom = hour
+    >>> task1.uom = unit
     >>> project.children.append(task1)
     >>> project.save()
 
     >>> task2 = ProjectWork()
     >>> task2.name = 'Task 2'
-    >>> task2.type = 'task'
+    >>> task2.type = 'project'
     >>> task2.invoice_product_type = 'goods'
     >>> task2.product_goods = product
     >>> task2.quantity = 1000.0
@@ -179,78 +180,23 @@ Create First Certification::
 
     >>> config.user = project_certification_user.id
     >>> Certification = Model.get('project.certification')
-    >>> certification = Certification()
-    >>> certification.work = project
-    >>> certification.date = two_days_ago
-    >>> certification.company = company
-    >>> line1, line2 = certification.lines
-    >>> line1.quantity = 5
-    >>> line2.quantity = 10
-    >>> certification.save()
-    >>> certification.reload()
-
-Propose Certifications::
-
-    >>> certification.click('proposal')
-
-Check Certifications::
-
-    >>> line1, line2 = certification.lines
-    >>> line1.work_quantity
-    100.0
-    >>> line1.certified_quantity
-    0.0
-    >>> line1.pending_quantity
-    100.0
-    >>> line2.work_quantity
-    1000.0
-    >>> line2.certified_quantity
-    0.0
-    >>> line2.pending_quantity
-    1000.0
-
-Confirm Certifications::
-
-    >>> certification.click('confirm')
-
-Invoice project::
-
-    >>> config.user = project_invoice_user.id
-    >>> project.click('invoice')
-    >>> project.invoiced_amount
-    Decimal('1100.00')
-
-Check Certifications::
-
-    >>> line1, line2 = certification.lines
-    >>> line1.work_quantity
-    100.0
-    >>> line1.certified_quantity
-    5.0
-    >>> line1.pending_quantity
-    95.0
-    >>> line2.work_quantity
-    1000.0
-    >>> line2.certified_quantity
-    10.0
-    >>> line2.pending_quantity
-    990.0
-
-Create Second Certification::
-
-    >>> config.user = project_certification_user.id
+    >>> CertificationLine = Model.get('project.certification.line')
     >>> certification = Certification()
     >>> certification.work = project
     >>> certification.date = two_days_ago
     >>> certification.state = 'draft'
     >>> certification.company = company
-    >>> line1, line2 = certification.lines
-    >>> line1.work = task1
-    >>> line1.quantity = 5
-    >>> line1.save()
-    >>> line2.work = task2
-    >>> line2.quantity = 10
-    >>> line2.save()
+    >>> certification.save()
+    >>> certification_line = CertificationLine()
+    >>> certification_line.certification = certification
+    >>> certification_line.quantity = 5
+    >>> certification_line.work = task1
+    >>> certification_line.save()
+    >>> certification_line = CertificationLine()
+    >>> certification_line.certification = certification
+    >>> certification_line.quantity = 10
+    >>> certification_line.work = task2
+    >>> certification_line.save()
 
 Propose Certifications::
 
@@ -315,7 +261,7 @@ Check Certifications::
     >>> line2.pending_quantity
     980.0
 
-Create Third Certification::
+Create Second Certification::
 
     >>> config.user = project_certification_user.id
     >>> certification = Certification()
@@ -323,13 +269,17 @@ Create Third Certification::
     >>> certification.date = two_days_ago
     >>> certification.state = 'draft'
     >>> certification.company = company
-    >>> line1, line2 = certification.lines
-    >>> line1.work = task1
-    >>> line1.quantity = -2
-    >>> line1.save()
-    >>> line2.work = task2
-    >>> line2.quantity = -18
-    >>> line2.save()
+    >>> certification.save()
+    >>> certification_line = CertificationLine()
+    >>> certification_line.certification = certification
+    >>> certification_line.quantity = -2
+    >>> certification_line.work = task1
+    >>> certification_line.save()
+    >>> certification_line = CertificationLine()
+    >>> certification_line.certification = certification
+    >>> certification_line.quantity = -18
+    >>> certification_line.work = task2
+    >>> certification_line.save()
 
 Propose Certifications::
 
