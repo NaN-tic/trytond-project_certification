@@ -371,11 +371,15 @@ class Work:
         if self.total_progress_quantity() <= self.invoiced_quantity:
             return res
 
-        quantity = self.total_progress_quantity() - self.invoiced_quantity
+        product = self.product_goods
+        unit = product.default_uom
+        quantity = Decimal(str(self.total_progress_quantity() -
+                self.invoiced_quantity))
+        quantity.quantize(Decimal(str(10.0 ** - unit.digits)))
         res.append({
-                'product': self.product_goods,
-                'quantity': quantity,
-                'unit': self.product_goods.default_uom,
+                'product': product,
+                'quantity': float(quantity),
+                'unit': unit,
                 'unit_price': self.list_price,
                 'origin': InvoicedProgress(
                     work=self,
